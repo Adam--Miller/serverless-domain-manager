@@ -1,6 +1,6 @@
 {
   "name": "serverless-domain-manager",
-  "version": "3.2.2",
+  "version": "3.2.1",
   "engines": {
     "node": ">=4.0"
   },
@@ -30,7 +30,7 @@
     "test": "tsc --project . && nyc mocha -r ts-node/register test/unit-tests/index.test.ts && nyc report --reporter=text-summary",
     "integration-test": "node ./node_modules/istanbul/lib/cli.js test _mocha test/integration-tests -- -R spec",
     "lint": "tslint --project .",
-    "build": "./node_modules/.bin/tsc --project .",
+    "build": "tsc --project .",
     "postinstall": "npm run build"
   },
   "files": [
