@@ -521,11 +521,48 @@ class ServerlessCustomDomain {
         });
     }
     /**
+     * Gets value by name from cloudformation exports
+     */
+    getImportValue(importValueName, nextToken = null) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const params = nextToken ? { NextToken: nextToken } : {};
+            const result = yield this.cloudformation.listExports(params).promise();
+            const importValue = result.Exports.find((val) => val.Name === importValueName);
+            if (importValue) {
+                return importValue.Value;
+            }
+            if (result.NextToken) {
+                return this.getImportValue(importValueName, result.NextToken);
+            }
+            return null;
+        });
+    }
+    /**
      * Gets rest API id from CloudFormation stack
      */
     getRestApiId() {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.serverless.service.provider.apiGateway && this.serverless.service.provider.apiGateway.restApiId) {
+                if (typeof this.serverless.service.provider.apiGateway.restApiId === "object" &&
+                    this.serverless.service.provider.apiGateway.restApiId["Fn::ImportValue"]) {
+                    try {
+                        const importValueName = this.serverless.service.provider.apiGateway.restApiId["Fn::ImportValue"];
+                        const importValue = yield this.getImportValue(importValueName);
+                        if (importValue) {
+                            return importValue;
+                        }
+                        throw new Error(`Error: CloudFormation ImportValue not found
+                  by ${this.serverless.service.provider.apiGateway.restApiId["Fn::ImportValue"]}\n`);
+                    }
+                    catch (err) {
+                        this.logIfDebug(err);
+                        throw new Error(`Error: Failed to find CloudFormation ImportValue
+                  by ${this.serverless.service.provider.apiGateway.restApiId["Fn::ImportValue"]}\n`);
+                    }
+                }
+                if (typeof this.serverless.service.provider.apiGateway.restApiId === "object") {
+                    throw new Error("Error: Unsupported restApiId object");
+                }
                 this.serverless.cli.log(`Mapping custom domain to existing API
                 ${this.serverless.service.provider.apiGateway.restApiId}.`);
                 return this.serverless.service.provider.apiGateway.restApiId;
